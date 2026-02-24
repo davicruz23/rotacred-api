@@ -6,9 +6,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import tads.ufrn.apigestao.controller.mapper.SaleMapper;
-import tads.ufrn.apigestao.domain.dto.sale.SaleDTO;
-import tads.ufrn.apigestao.domain.dto.sale.SalesByCityDTO;
-import tads.ufrn.apigestao.domain.dto.sale.UpsertSaleDTO;
+import tads.ufrn.apigestao.domain.dto.sale.*;
 import tads.ufrn.apigestao.service.SaleService;
 
 import java.net.URI;
@@ -21,10 +19,21 @@ public class SaleController {
 
     private SaleService service;
 
-    @PreAuthorize("hasAnyRole('SUPERADMIN','FISCAL')")
-    @GetMapping("/all")
-    public ResponseEntity<List<SaleDTO>> findAll(){
-        return ResponseEntity.ok().body(service.findAll().stream().map(SaleMapper::mapper).toList());
+//    @PreAuthorize("hasAnyRole('SUPERADMIN','FISCAL')")
+//    @GetMapping("/all")
+//    public ResponseEntity<List<SaleDTO>> findAll(){
+//        return ResponseEntity.ok().body(service.findAll().stream().map(SaleMapper::mapper).toList());
+//    }
+
+    @GetMapping("/sales/{id}")
+    public ResponseEntity<SaleDetailDTO> findSaleDetail(@PathVariable Long id) {
+        return ResponseEntity.ok(service.findSaleDetail(id));
+
+    }
+
+    @GetMapping("/sales/search")
+    public ResponseEntity<List<SaleSearchDTO>> searchSales(@RequestParam(required = false) String name, @RequestParam(required = false) Long id, @RequestParam(required = false) String cpf, @RequestParam(required = false) String city) {
+        return ResponseEntity.ok(service.searchSales(name, id, cpf, city));
     }
 
     @PreAuthorize("hasAnyRole('SUPERADMIN','FISCAL')")

@@ -71,10 +71,9 @@ public class CollectorController {
 
     @PreAuthorize("hasAnyRole('SUPERADMIN','COBRADOR')")
     @GetMapping("/all/sales")
-    public ResponseEntity<List<CollectorDTO>> findAll(@RequestParam(required = false) Integer status) {
-        return ResponseEntity.ok(service.findAll(status));
+    public ResponseEntity<List<CollectorDTO>> findAll(@RequestParam(required = false) Integer status, @RequestParam(required = false) Long collectorId) {
+        return ResponseEntity.ok(service.findAll(status, collectorId));
     }
-
 
     @PreAuthorize("hasAnyRole('SUPERADMIN','COBRADOR')")
     @GetMapping("/name/all")

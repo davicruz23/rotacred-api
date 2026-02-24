@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import tads.ufrn.apigestao.domain.Sale;
 import tads.ufrn.apigestao.domain.dto.dashboard.DashboardSaleDTO;
+import tads.ufrn.apigestao.domain.dto.sale.SaleSearchDTO;
 import tads.ufrn.apigestao.domain.dto.sale.SalesByCityDTO;
 
 import java.time.LocalDate;
@@ -109,4 +110,28 @@ public interface SaleRepository extends JpaRepository<Sale, Long> {
 """, nativeQuery = true)
     void assignCollector(Long collectorId, List<Long> saleIds);
 
+    @Query("""
+    SELECT new tads.ufrn.apigestao.domain.dto.sale.SaleSearchDTO(
+        s.id,
+        s.saleDate,
+        c.name,
+        c.cpf,
+        a.city
+    )
+    FROM Sale s
+    JOIN s.preSale ps
+    JOIN ps.client c
+    JOIN c.address a
+    WHERE (:id IS NULL OR s.id = :id)
+      AND (:name IS NULL OR LOWER(c.name) LIKE LOWER(CONCAT('%', :name, '%')))
+      AND (:cpf IS NULL OR c.cpf = :cpf)
+      AND (:city IS NULL OR LOWER(a.city) LIKE LOWER(CONCAT('%', :city, '%')))
+    ORDER BY s.saleDate DESC
+""")
+    List<SaleSearchDTO> searchSales(
+            @Param("name") String name,
+            @Param("id") Long id,
+            @Param("cpf") String cpf,
+            @Param("city") String city
+    );
 }

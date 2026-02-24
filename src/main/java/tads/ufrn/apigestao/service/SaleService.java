@@ -1,27 +1,24 @@
 package tads.ufrn.apigestao.service;
 
-import jakarta.transaction.Transactional;
+//import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import tads.ufrn.apigestao.domain.*;
-import tads.ufrn.apigestao.domain.dto.sale.CitySalesDTO;
-import tads.ufrn.apigestao.domain.dto.sale.SaleItemDTO;
-import tads.ufrn.apigestao.domain.dto.sale.SalesByCityDTO;
-import tads.ufrn.apigestao.domain.dto.sale.UpsertSaleDTO;
+import tads.ufrn.apigestao.domain.dto.product.ProductItemDTO;
+import tads.ufrn.apigestao.domain.dto.sale.*;
 import tads.ufrn.apigestao.enums.PaymentType;
 import tads.ufrn.apigestao.enums.SaleStatus;
 import tads.ufrn.apigestao.exception.ResourceNotFoundException;
-import tads.ufrn.apigestao.repository.ApprovalLocationRepository;
-import tads.ufrn.apigestao.repository.InstallmentRepository;
-import tads.ufrn.apigestao.repository.PreSaleRepository;
-import tads.ufrn.apigestao.repository.SaleRepository;
+import tads.ufrn.apigestao.repository.*;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -32,6 +29,7 @@ public class SaleService {
     private final InstallmentRepository installmentRepository;
     private final ApprovalLocationRepository approvalLocationRepository;
     private final ModelMapper mapper;
+    private final SaleReturnRepository saleReturnRepository;
 
     public List<Sale> findAll(){
         return repository.findAll();
@@ -54,9 +52,7 @@ public class SaleService {
     }
 
     @Transactional
-    public Sale approvePreSale(Long preSaleId, Inspector inspector,
-                               PaymentType paymentMethod, int installments,
-                               BigDecimal cashPaid, Double latitude, Double longitude) {
+    public Sale approvePreSale(Long preSaleId, Inspector inspector, PaymentType paymentMethod, int installments, BigDecimal cashPaid, Double latitude, Double longitude) {
 
         PreSale preSale = preSaleService.approvePreSale(preSaleId, inspector);
 
@@ -178,5 +174,57 @@ public class SaleService {
         if (saleIds == null || saleIds.isEmpty()) return;
 
         repository.assignCollector(collectorId, saleIds);
+    }
+
+    @Transactional(readOnly = true)
+    public SaleDetailDTO findSaleDetail(Long id) {
+
+        Sale sale = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Venda não encontrada"));
+
+        Map<Long, Integer> returnedMap = saleReturnRepository
+                .sumReturnedBySale(id)
+                .stream()
+                .collect(Collectors.toMap(
+                        r -> (Long) r[0],
+                        r -> ((Number) r[1]).intValue()
+                ));
+
+        SaleDetailDTO dto = new SaleDetailDTO();
+
+        dto.setSaleId(sale.getId());
+        dto.setSaleDate(sale.getSaleDate());
+        dto.setClientName(sale.getPreSale().getClient().getName());
+
+        List<ProductItemDTO> products = sale.getPreSale().getItems().stream()
+                .map(item -> {
+
+                    int soldQuantity = item.getQuantity();
+                    int returnedQuantity =
+                            returnedMap.getOrDefault(item.getProduct().getId(), 0);
+
+                    int available = soldQuantity - returnedQuantity;
+
+                    // 🔹 Só adiciona se ainda houver quantidade disponível
+                    if (available > 0) {
+                        return new ProductItemDTO(
+                                item.getProduct().getId(),
+                                item.getProduct().getName(),
+                                available
+                        );
+                    }
+
+                    return null;
+                })
+                .filter(Objects::nonNull)
+                .toList();
+
+        dto.setProducts(products);
+
+        return dto;
+    }
+
+    public List<SaleSearchDTO> searchSales(String name, Long id, String cpf, String city) {
+        return repository.searchSales(name, id, cpf, city);
     }
 }

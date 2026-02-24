@@ -15,7 +15,7 @@ import tads.ufrn.apigestao.service.SaleReturnService;
 import java.util.List;
 
 @RestController
-@RequestMapping("/sale-return")
+@RequestMapping("/api/sale-return")
 @RequiredArgsConstructor
 public class SaleReturnController {
 
@@ -42,12 +42,8 @@ public class SaleReturnController {
     }
 
     @PatchMapping("/{saleReturnId}/update/status")
-    public ResponseEntity<Void> updateAfterDefect(
-            @PathVariable Long saleReturnId,
-            @RequestBody UpdateSaleStatusRequest request) {
-
+    public ResponseEntity<Void> updateAfterDefect(@PathVariable Long saleReturnId, @RequestBody UpdateSaleStatusRequest request) {
         service.updateAfterDefect(saleReturnId, request.getStatus());
-
         return ResponseEntity.noContent().build();
     }
 }

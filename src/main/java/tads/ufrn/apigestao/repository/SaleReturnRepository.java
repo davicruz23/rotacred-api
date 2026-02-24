@@ -20,4 +20,20 @@ public interface SaleReturnRepository extends JpaRepository<SaleReturn, Long> {
        where (:status is null or sr.saleStatus = :status)
     """)
     List<SaleReturn> findAllWithSale(SaleStatus status);
+
+    @Query("""
+    SELECT sr.productId, COALESCE(SUM(sr.quantityReturned), 0)
+    FROM SaleReturn sr
+    WHERE sr.sale.id = :saleId
+    GROUP BY sr.productId
+""")
+    List<Object[]> sumReturnedBySale(Long saleId);
+
+    @Query("""
+    SELECT COALESCE(SUM(sr.quantityReturned), 0)
+    FROM SaleReturn sr
+    WHERE sr.sale.id = :saleId
+      AND sr.productId = :productId
+""")
+    int sumReturnedQuantity(Long saleId, Long productId);
 }

@@ -35,7 +35,7 @@ public class SaleReturnService {
         Sale sale = saleService.findById(saleId);
         SaleStatus newStatus = SaleStatus.fromValue(request.getStatus());
 
-        validateReturnRequest(saleId, newStatus);
+        validateReturnRequest(sale);
 
         OffsetDateTime now = OffsetDateTime.now();
 
@@ -50,13 +50,10 @@ public class SaleReturnService {
         return mapToDTO(saleReturns);
     }
 
-    private void validateReturnRequest(Long saleId, SaleStatus newStatus) {
+    private void validateReturnRequest(Sale sale) {
 
-        if (saleReturnRepository.existsBySaleId(saleId)
-                && (newStatus == SaleStatus.DEVOLVIDO_CLIENTE
-                || newStatus == SaleStatus.DESISTENCIA)) {
-
-            throw new BusinessException("Essa venda já foi devolvida.");
+        if (isSaleFullyReturned(sale)) {
+            throw new BusinessException("Essa venda já foi totalmente devolvida.");
         }
     }
 
@@ -65,11 +62,7 @@ public class SaleReturnService {
         saleRepository.save(sale);
     }
 
-    private void handleFinancialImpactByStatus(
-            Sale sale,
-            Long saleId,
-            ReturnSaleRequest request,
-            SaleStatus newStatus) {
+    private void handleFinancialImpactByStatus(Sale sale, Long saleId, ReturnSaleRequest request, SaleStatus newStatus) {
 
         switch (newStatus) {
 
@@ -93,10 +86,7 @@ public class SaleReturnService {
         }
     }
 
-    private void handleDesistencia(
-            Sale sale,
-            Long saleId,
-            ReturnSaleRequest request) {
+    private void handleDesistencia(Sale sale, Long saleId, ReturnSaleRequest request) {
 
         List<Installment> futureInstallments =
                 installmentRepository.findAllBySaleIdAndPaidFalseOrderByDueDateDesc(saleId);
@@ -133,10 +123,18 @@ public class SaleReturnService {
                 );
             }
 
-            if (dto.getQuantityReturned() <= 0 ||
-                    dto.getQuantityReturned() > item.getQuantity()) {
+            int alreadyReturned = saleReturnRepository
+                    .sumReturnedQuantity(sale.getId(), dto.getProductId());
 
-                throw new BusinessException("Quantidade devolvida inválida.");
+            int availableToReturn = item.getQuantity() - alreadyReturned;
+
+            if (dto.getQuantityReturned() <= 0 ||
+                    dto.getQuantityReturned() > availableToReturn) {
+
+                throw new BusinessException(
+                        "Quantidade inválida. Disponível para devolução: "
+                                + availableToReturn
+                );
             }
 
             BigDecimal unitPrice = item.getProduct().getValue();
@@ -149,9 +147,7 @@ public class SaleReturnService {
         return discount;
     }
 
-    private void applyDiscountOnInstallments(
-            List<Installment> installments,
-            BigDecimal discount) {
+    private void applyDiscountOnInstallments(List<Installment> installments, BigDecimal discount) {
 
         for (Installment inst : installments) {
 
@@ -188,10 +184,7 @@ public class SaleReturnService {
         installmentRepository.saveAll(futureInstallments);
     }
 
-    private void handleDanificado(
-            Sale sale,
-            Long saleId,
-            ReturnSaleRequest request) {
+    private void handleDanificado(Sale sale, Long saleId, ReturnSaleRequest request) {
 
         handleDesistencia(sale, saleId, request);
     }
@@ -206,11 +199,7 @@ public class SaleReturnService {
 
     }
 
-    private List<SaleReturn> createSaleReturns(
-            Sale sale,
-            ReturnSaleRequest request,
-            SaleStatus status,
-            OffsetDateTime now) {
+    private List<SaleReturn> createSaleReturns(Sale sale, ReturnSaleRequest request, SaleStatus status, OffsetDateTime now) {
 
         List<SaleReturn> saleReturns = new ArrayList<>();
 
@@ -314,7 +303,6 @@ public class SaleReturnService {
         return request;
     }
 
-
     public List<SaleReturnData> findReturns(Integer statusValue) {
 
         SaleStatus status = statusValue != null
@@ -338,6 +326,21 @@ public class SaleReturnService {
         return returns.stream()
                 .map(sr -> SaleReturnMapper.mapper(sr, productNameMap))
                 .toList();
+    }
+
+    private boolean isSaleFullyReturned(Sale sale) {
+
+        for (PreSaleItem item : sale.getPreSale().getItems()) {
+
+            int alreadyReturned = saleReturnRepository
+                    .sumReturnedQuantity(sale.getId(), item.getProduct().getId());
+
+            if (alreadyReturned < item.getQuantity()) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
 }

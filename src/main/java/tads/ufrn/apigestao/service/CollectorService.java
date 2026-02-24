@@ -10,6 +10,7 @@ import tads.ufrn.apigestao.domain.*;
 import tads.ufrn.apigestao.domain.dto.collector.*;
 import tads.ufrn.apigestao.domain.dto.installment.InstallmentPaidDTO;
 import tads.ufrn.apigestao.domain.dto.sale.SaleCollectorDTO;
+import tads.ufrn.apigestao.enums.SaleStatus;
 import tads.ufrn.apigestao.exception.BusinessException;
 import tads.ufrn.apigestao.exception.ResourceNotFoundException;
 import tads.ufrn.apigestao.repository.*;
@@ -40,24 +41,18 @@ public class CollectorService {
     }
 
     @Transactional(readOnly = true)
-    public List<CollectorDTO> findAll(Integer status) {
+    public List<CollectorDTO> findAll(Integer status, Long collectorId) {
 
-        List<Collector> collectors = repository.findAll();
+        SaleStatus statusEnum = null;
+
+        if (status != null) {
+            statusEnum = SaleStatus.fromValue(status);
+        }
+
+        List<Collector> collectors =
+                repository.findCollectorsWithSales(statusEnum, collectorId);
 
         for (Collector collector : collectors) {
-
-            if (collector.getSales() == null) continue;
-
-            if (status != null) {
-                collector.setSales(
-                        collector.getSales().stream()
-                                .filter(sale ->
-                                        sale.getStatus() != null &&
-                                                sale.getStatus().getValue() == status
-                                )
-                                .toList()
-                );
-            }
 
             for (Sale sale : collector.getSales()) {
 
