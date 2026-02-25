@@ -41,6 +41,11 @@ public class SaleReturnController {
         return ResponseEntity.ok(service.findReturns(status));
     }
 
+    @GetMapping("/status/end")
+    public ResponseEntity<List<SaleReturnData>> getReturnsGuarantee() {
+        return ResponseEntity.ok(service.findReturnGuarantee());
+    }
+
     @PatchMapping("/{saleReturnId}/update/status")
     public ResponseEntity<Void> updateAfterDefect(@PathVariable Long saleReturnId, @RequestBody UpdateSaleStatusRequest request) {
         service.updateAfterDefect(saleReturnId, request.getStatus());

@@ -328,6 +328,27 @@ public class SaleReturnService {
                 .toList();
     }
 
+    public List<SaleReturnData> findReturnGuarantee() {
+
+        List<SaleReturn> returns = saleReturnRepository.findAllDefectiveProductReturns();
+
+        Set<Long> productIds = returns.stream()
+                .map(SaleReturn::getProductId)
+                .collect(Collectors.toSet());
+
+        Map<Long, String> productNameMap =
+                productRepository.findAllByIdIn(productIds)
+                        .stream()
+                        .collect(Collectors.toMap(
+                                Product::getId,
+                                Product::getName
+                        ));
+
+        return returns.stream()
+                .map(sr -> SaleReturnMapper.mapper(sr, productNameMap))
+                .toList();
+    }
+
     private boolean isSaleFullyReturned(Sale sale) {
 
         for (PreSaleItem item : sale.getPreSale().getItems()) {

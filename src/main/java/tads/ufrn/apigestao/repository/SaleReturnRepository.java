@@ -22,6 +22,14 @@ public interface SaleReturnRepository extends JpaRepository<SaleReturn, Long> {
     List<SaleReturn> findAllWithSale(SaleStatus status);
 
     @Query("""
+       select sr
+       from SaleReturn sr
+       join fetch sr.sale
+       where sr.saleStatus = tads.ufrn.apigestao.enums.SaleStatus.DEFEITO_PRODUTO
+    """)
+    List<SaleReturn> findAllDefectiveProductReturns();
+
+    @Query("""
     SELECT sr.productId, COALESCE(SUM(sr.quantityReturned), 0)
     FROM SaleReturn sr
     WHERE sr.sale.id = :saleId
