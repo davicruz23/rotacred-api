@@ -59,6 +59,7 @@ public class ChargingController {
         return ResponseEntity.noContent().build();
     }
 
+    @PreAuthorize("hasAnyRole('SUPERADMIN','FUNCIONARIO')")
     @PutMapping("/add")
     public ResponseEntity<ChargingDTO> addProducts(@RequestBody List<AddChargingItemDTO> items) {
         return ResponseEntity.ok(service.addProductsToCharging(items));

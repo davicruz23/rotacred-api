@@ -328,9 +328,10 @@ public class SaleReturnService {
                 .toList();
     }
 
-    public List<SaleReturnData> findReturnGuarantee() {
+    public List<SaleReturnData> findReturnGuarantee(Long id, String name, String cpf) {
 
-        List<SaleReturn> returns = saleReturnRepository.findAllDefectiveProductReturns();
+        List<SaleReturn> returns =
+                saleReturnRepository.findAllDefectiveProductReturns(id, name, cpf);
 
         Set<Long> productIds = returns.stream()
                 .map(SaleReturn::getProductId)

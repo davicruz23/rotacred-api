@@ -25,12 +25,14 @@ public class SaleController {
 //        return ResponseEntity.ok().body(service.findAll().stream().map(SaleMapper::mapper).toList());
 //    }
 
+    @PreAuthorize("hasAnyRole('SUPERADMIN','FUNCIONARIO')")
     @GetMapping("/sales/{id}")
     public ResponseEntity<SaleDetailDTO> findSaleDetail(@PathVariable Long id) {
         return ResponseEntity.ok(service.findSaleDetail(id));
 
     }
 
+    @PreAuthorize("hasAnyRole('SUPERADMIN','FUNCIONARIO')")
     @GetMapping("/sales/search")
     public ResponseEntity<List<SaleSearchDTO>> searchSales(@RequestParam(required = false) String name, @RequestParam(required = false) Long id, @RequestParam(required = false) String cpf, @RequestParam(required = false) String city) {
         return ResponseEntity.ok(service.searchSales(name, id, cpf, city));

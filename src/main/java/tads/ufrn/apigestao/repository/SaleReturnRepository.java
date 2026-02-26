@@ -2,6 +2,7 @@ package tads.ufrn.apigestao.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import tads.ufrn.apigestao.domain.SaleReturn;
 import tads.ufrn.apigestao.enums.SaleStatus;
@@ -24,10 +25,18 @@ public interface SaleReturnRepository extends JpaRepository<SaleReturn, Long> {
     @Query("""
        select sr
        from SaleReturn sr
-       join fetch sr.sale
+       join fetch sr.sale s
+       join fetch s.preSale.client c
        where sr.saleStatus = tads.ufrn.apigestao.enums.SaleStatus.DEFEITO_PRODUTO
-    """)
-    List<SaleReturn> findAllDefectiveProductReturns();
+       and (:id is null or s.id = :id)
+       and (:name is null or lower(c.name) like lower(concat('%', :name, '%')))
+       and (:cpf is null or c.cpf = :cpf)
+""")
+    List<SaleReturn> findAllDefectiveProductReturns(
+            @Param("id") Long id,
+            @Param("name") String name,
+            @Param("cpf") String cpf
+    );
 
     @Query("""
     SELECT sr.productId, COALESCE(SUM(sr.quantityReturned), 0)
