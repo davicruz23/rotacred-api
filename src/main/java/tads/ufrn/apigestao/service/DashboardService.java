@@ -15,10 +15,7 @@ import tads.ufrn.apigestao.repository.*;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.DayOfWeek;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
+import java.time.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -163,41 +160,56 @@ public class DashboardService {
 
     public DashboardTotalCobradoDTO getTotalCobrado() {
 
-        LocalDateTime inicioSemanaAtual = LocalDate.now()
-                .with(DayOfWeek.MONDAY)
-                .atStartOfDay();
-        LocalDateTime fimSemanaAtual = LocalDate.now()
-                .atTime(LocalTime.MAX);
+        ZoneId zone = ZoneId.of("America/Sao_Paulo");
+        LocalDate hoje = LocalDate.now(zone);
 
-        LocalDateTime inicioSemanaAnterior = LocalDate.now()
-                .minusWeeks(1)
-                .with(DayOfWeek.MONDAY)
-                .atStartOfDay();
-        LocalDateTime fimSemanaAnterior = LocalDate.now()
-                .minusWeeks(1)
-                .with(DayOfWeek.SUNDAY)
-                .atTime(LocalTime.MAX);
+        LocalDate inicioSemanaAtualDate = hoje.with(DayOfWeek.MONDAY);
+        LocalDate fimSemanaAtualDate = hoje.with(DayOfWeek.SUNDAY);
 
-        BigDecimal totalSemanaAtual = installmentItemRepository.findTotalCobradoPorPeriodo(
-                inicioSemanaAtual, fimSemanaAtual
-        );
+        LocalDateTime inicioSemanaAtual = inicioSemanaAtualDate.atStartOfDay();
+        LocalDateTime fimSemanaAtual = fimSemanaAtualDate.atTime(LocalTime.MAX);
 
-        BigDecimal totalSemanaAnterior = installmentItemRepository.findTotalCobradoPorPeriodo(
-                inicioSemanaAnterior, fimSemanaAnterior
-        );
+        // Semana anterior (segunda até domingo completa)
+        LocalDate inicioSemanaAnteriorDate = hoje.minusWeeks(1).with(DayOfWeek.MONDAY);
+        LocalDate fimSemanaAnteriorDate = hoje.minusWeeks(1).with(DayOfWeek.SUNDAY);
 
-        if (totalSemanaAtual == null) totalSemanaAtual = BigDecimal.ZERO;
-        if (totalSemanaAnterior == null) totalSemanaAnterior = BigDecimal.ZERO;
+        LocalDateTime inicioSemanaAnterior = inicioSemanaAnteriorDate.atStartOfDay();
+        LocalDateTime fimSemanaAnterior = fimSemanaAnteriorDate.atTime(LocalTime.MAX);
 
-        BigDecimal percentual = BigDecimal.ZERO;
+        BigDecimal totalSemanaAtual = installmentItemRepository
+                .findTotalCobradoPorPeriodo(inicioSemanaAtual, fimSemanaAtual);
 
-        if (totalSemanaAnterior.compareTo(BigDecimal.ZERO) != 0) {
-            percentual = totalSemanaAtual.subtract(totalSemanaAnterior)
-                    .divide(totalSemanaAnterior, 2, RoundingMode.HALF_UP)
-                    .multiply(BigDecimal.valueOf(100));
-        }
+        BigDecimal totalSemanaAnterior = installmentItemRepository
+                .findTotalCobradoPorPeriodo(inicioSemanaAnterior, fimSemanaAnterior);
+
+        totalSemanaAtual = Optional.ofNullable(totalSemanaAtual).orElse(BigDecimal.ZERO);
+        totalSemanaAnterior = Optional.ofNullable(totalSemanaAnterior).orElse(BigDecimal.ZERO);
+
+        BigDecimal percentual = getBigDecimal(totalSemanaAnterior, totalSemanaAtual);
 
         return new DashboardTotalCobradoDTO(totalSemanaAtual, percentual);
+    }
+
+    private static BigDecimal getBigDecimal(BigDecimal totalSemanaAnterior, BigDecimal totalSemanaAtual) {
+        BigDecimal percentual;
+
+        if (totalSemanaAnterior.compareTo(BigDecimal.ZERO) == 0) {
+
+            if (totalSemanaAtual.compareTo(BigDecimal.ZERO) > 0) {
+                percentual = BigDecimal.valueOf(100);
+            } else {
+                percentual = BigDecimal.ZERO;
+            }
+
+        } else {
+
+            percentual = totalSemanaAtual
+                    .subtract(totalSemanaAnterior)
+                    .divide(totalSemanaAnterior, 4, RoundingMode.HALF_UP)
+                    .multiply(BigDecimal.valueOf(100))
+                    .setScale(2, RoundingMode.HALF_UP);
+        }
+        return percentual;
     }
 
     public DashboardTotalClientsDTO getTotalClients() {
@@ -228,24 +240,59 @@ public class DashboardService {
         List<Object[]> rows = installmentRepository.findTopCollectorsStatus();
         List<CollectorTopDTO> result = new ArrayList<>();
 
+        ZoneId zone = ZoneId.of("America/Sao_Paulo");
+        LocalDate hoje = LocalDate.now(zone);
+
+        int diaAtual = hoje.getDayOfMonth();
+        int totalDiasMes = hoje.lengthOfMonth();
+
         for (Object[] row : rows) {
 
             Long collectorId = ((Number) row[0]).longValue();
-            String collectorName = ((String) row[1]);
+            String collectorName = (String) row[1];
 
-            Double totalCollectedToday = row[2] != null
-                    ? ((Number) row[2]).doubleValue()
-                    : 0.0;
+            BigDecimal totalCollectedToday = row[2] != null
+                    ? BigDecimal.valueOf(((Number) row[2]).doubleValue())
+                    : BigDecimal.ZERO;
 
-            Double totalToCollectThisMonth = row[3] != null
-                    ? ((Number) row[3]).doubleValue()
-                    : 0.0;
+            BigDecimal totalCollectedMonth = row[3] != null
+                    ? BigDecimal.valueOf(((Number) row[3]).doubleValue())
+                    : BigDecimal.ZERO;
+
+            BigDecimal totalToCollectThisMonth = row[4] != null
+                    ? BigDecimal.valueOf(((Number) row[4]).doubleValue())
+                    : BigDecimal.ZERO;
+
+            // Meta diária média
+            BigDecimal metaDiaria = BigDecimal.ZERO;
+
+            if (totalDiasMes > 0) {
+                metaDiaria = totalToCollectThisMonth
+                        .divide(BigDecimal.valueOf(totalDiasMes), 4, RoundingMode.HALF_UP);
+            }
+
+            // Meta esperada até hoje
+            BigDecimal metaEsperadaAteHoje = metaDiaria
+                    .multiply(BigDecimal.valueOf(diaAtual))
+                    .setScale(2, RoundingMode.HALF_UP);
+
+            // Performance percentual
+            BigDecimal performancePercent = BigDecimal.ZERO;
+
+            if (metaEsperadaAteHoje.compareTo(BigDecimal.ZERO) > 0) {
+                performancePercent = totalCollectedMonth
+                        .divide(metaEsperadaAteHoje, 4, RoundingMode.HALF_UP)
+                        .multiply(BigDecimal.valueOf(100))
+                        .setScale(2, RoundingMode.HALF_UP);
+            }
 
             result.add(new CollectorTopDTO(
                     collectorId,
                     collectorName,
-                    totalCollectedToday,
-                    totalToCollectThisMonth
+                    totalCollectedToday.doubleValue(),
+                    totalToCollectThisMonth.doubleValue(),
+                    metaEsperadaAteHoje.doubleValue(),
+                    performancePercent.doubleValue()
             ));
         }
 

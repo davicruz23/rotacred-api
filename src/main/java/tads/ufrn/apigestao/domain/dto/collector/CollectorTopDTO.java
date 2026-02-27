@@ -13,4 +13,6 @@ public class CollectorTopDTO {
     private String collectorName;
     private Double totalCollectedToday;
     private Double totalToCollectThisMonth;
+    private Double expectedUntilToday;
+    private Double performancePercent;
 }
