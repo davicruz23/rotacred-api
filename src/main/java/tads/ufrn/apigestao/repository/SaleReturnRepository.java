@@ -1,5 +1,7 @@
 package tads.ufrn.apigestao.repository;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,12 +17,21 @@ public interface SaleReturnRepository extends JpaRepository<SaleReturn, Long> {
     boolean existsBySaleId(long saleId);
 
     @Query("""
-       select sr
-       from SaleReturn sr
-       join fetch sr.sale
-       where (:status is null or sr.saleStatus = :status)
-    """)
-    List<SaleReturn> findAllWithSale(SaleStatus status);
+    select sr
+    from SaleReturn sr
+    join fetch sr.sale s
+    join s.preSale ps
+    join ps.client c
+    where (:status is null or sr.saleStatus = :status)
+      and (:name is null or lower(c.name) like lower(concat('%', :name, '%')))
+      and (:cpf is null or c.cpf = :cpf)
+""")
+    Page<SaleReturn> findAllWithSale(
+            @Param("status") SaleStatus status,
+            @Param("name") String name,
+            @Param("cpf") String cpf,
+            Pageable pageable
+    );
 
     @Query("""
        select sr

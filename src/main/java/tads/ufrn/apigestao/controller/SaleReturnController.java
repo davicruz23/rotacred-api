@@ -2,6 +2,8 @@ package tads.ufrn.apigestao.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -40,8 +42,8 @@ public class SaleReturnController {
 
     @PreAuthorize("hasAnyRole('SUPERADMIN','FUNCIONARIO')")
     @GetMapping("/sale-returns")
-    public ResponseEntity<List<SaleReturnData>> getReturns(@RequestParam(required = false) Integer status) {
-        return ResponseEntity.ok(service.findReturns(status));
+    public ResponseEntity<Page<SaleReturnData>> getReturns(@RequestParam(required = false) Integer status, String name, String cpf, Pageable pageable) {
+        return ResponseEntity.ok(service.findReturns(status, name, cpf, pageable));
     }
 
     @PreAuthorize("hasAnyRole('SUPERADMIN','FUNCIONARIO')")

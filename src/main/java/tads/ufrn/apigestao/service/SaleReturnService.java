@@ -1,6 +1,8 @@
 package tads.ufrn.apigestao.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tads.ufrn.apigestao.controller.mapper.SaleReturnMapper;
@@ -303,15 +305,16 @@ public class SaleReturnService {
         return request;
     }
 
-    public List<SaleReturnData> findReturns(Integer statusValue) {
+    public Page<SaleReturnData> findReturns(Integer statusValue, String name, String cpf, Pageable pageable) {
 
         SaleStatus status = statusValue != null
                 ? SaleStatus.fromValue(statusValue)
                 : null;
 
-        List<SaleReturn> returns = saleReturnRepository.findAllWithSale(status);
+        Page<SaleReturn> returnsPage =
+                saleReturnRepository.findAllWithSale(status, name, cpf, pageable);
 
-        Set<Long> productIds = returns.stream()
+        Set<Long> productIds = returnsPage.getContent().stream()
                 .map(SaleReturn::getProductId)
                 .collect(Collectors.toSet());
 
@@ -323,9 +326,9 @@ public class SaleReturnService {
                                 Product::getName
                         ));
 
-        return returns.stream()
-                .map(sr -> SaleReturnMapper.mapper(sr, productNameMap))
-                .toList();
+        return returnsPage.map(sr ->
+                SaleReturnMapper.mapper(sr, productNameMap)
+        );
     }
 
     public List<SaleReturnData> findReturnGuarantee(Long id, String name, String cpf) {

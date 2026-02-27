@@ -29,7 +29,7 @@ public interface CollectorRepository extends JpaRepository<Collector, Long> {
     WHERE (:collectorId IS NULL OR c.id = :collectorId)
       AND (:status IS NULL OR s.status = :status)
     GROUP BY c
-    HAVING COUNT(s) > 1
+    HAVING COUNT(s) > 0
 """)
     List<Collector> findCollectorsWithSales(
             @Param("status") SaleStatus status,
