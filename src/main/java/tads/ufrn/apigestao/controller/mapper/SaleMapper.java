@@ -179,6 +179,7 @@ public class SaleMapper {
         if (sale == null) return null;
 
         return SaleReturnDTO.builder()
+                .saleId(sale.getId())
                 .saleDate(sale.getSaleDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy", new Locale("pt", "BR"))))
                 .clientName(sale.getPreSale().getClient().getName())
                 .build();

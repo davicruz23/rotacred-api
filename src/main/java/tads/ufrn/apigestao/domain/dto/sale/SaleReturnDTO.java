@@ -17,6 +17,7 @@ import java.util.List;
 @Builder
 public class SaleReturnDTO {
 
+    private Long saleId;
     private String saleDate;
     private String clientName;
 }
