@@ -8,9 +8,11 @@ import tads.ufrn.apigestao.domain.Collector;
 import tads.ufrn.apigestao.domain.Inspector;
 import tads.ufrn.apigestao.domain.Seller;
 import tads.ufrn.apigestao.domain.User;
+import tads.ufrn.apigestao.domain.dto.user.UpdatePasswordDTO;
 import tads.ufrn.apigestao.domain.dto.user.UpsertUserDTO;
 import tads.ufrn.apigestao.domain.dto.user.UserDTO;
 import tads.ufrn.apigestao.enums.UserType;
+import tads.ufrn.apigestao.exception.BusinessException;
 import tads.ufrn.apigestao.exception.ResourceNotFoundException;
 import tads.ufrn.apigestao.repository.CollectorRepository;
 import tads.ufrn.apigestao.repository.InspectorRepository;
@@ -75,13 +77,14 @@ public class UserService {
         return savedUser;
     }
 
-    public User update(User user) {
-        User searchUser = repository.findById(user.getId())
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado!"));
+    public void updatePassword(Long id, UpdatePasswordDTO dto) {
 
-        searchUser.setName(user.getPassword());
+        User user = repository.findById(id)
+                .orElseThrow(() -> new BusinessException("Usuário não existe!"));
 
-        return repository.save(searchUser);
+        user.setPassword(passwordEncoder.encode(dto.getPassword()));
+
+        repository.save(user);
     }
 
     public void delete(Long id) {

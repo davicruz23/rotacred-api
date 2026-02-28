@@ -6,6 +6,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import tads.ufrn.apigestao.controller.mapper.UserMapper;
+import tads.ufrn.apigestao.domain.dto.user.UpdatePasswordDTO;
 import tads.ufrn.apigestao.domain.dto.user.UpsertUserDTO;
 import tads.ufrn.apigestao.domain.dto.user.UserDTO;
 import tads.ufrn.apigestao.service.UserService;
@@ -38,6 +39,13 @@ public class UserController {
         URI uri = ServletUriComponentsBuilder
                 .fromCurrentRequest().path("/{id}").buildAndExpand(service.store(model).getId()).toUri();
         return ResponseEntity.created(uri).build();
+    }
+
+    @PreAuthorize("hasAnyRole('SUPERADMIN')")
+    @PostMapping("/{id}/update/password")
+    public ResponseEntity<Void> updatePassword(@PathVariable Long id, @RequestBody UpdatePasswordDTO dto) {
+        service.updatePassword(id, dto);
+        return ResponseEntity.noContent().build();
     }
 
     @PreAuthorize("hasAnyRole('SUPERADMIN')")
