@@ -3,6 +3,8 @@ package tads.ufrn.apigestao.service;
 //import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tads.ufrn.apigestao.domain.*;
@@ -224,7 +226,8 @@ public class SaleService {
         return dto;
     }
 
-    public List<SaleSearchDTO> searchSales(String name, Long id, String cpf, String city) {
-        return repository.searchSales(name, id, cpf, city);
+    public Page<SaleSearchDTO> searchSales(String name, Long id, String cpf, String city, Pageable pageable
+    ) {
+        return repository.searchSales(name, id, cpf, city, pageable);
     }
 }

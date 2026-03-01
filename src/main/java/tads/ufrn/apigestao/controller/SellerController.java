@@ -1,6 +1,7 @@
 package tads.ufrn.apigestao.controller;
 
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -11,7 +12,9 @@ import tads.ufrn.apigestao.controller.mapper.SellerMapper;
 import tads.ufrn.apigestao.domain.dto.charging.UpsertChargingDTO;
 import tads.ufrn.apigestao.domain.dto.collector.CollectorCommissionDTO;
 import tads.ufrn.apigestao.domain.dto.collector.CollectorDTO;
+import tads.ufrn.apigestao.domain.dto.commissionHistory.CommissionHistoryDTO;
 import tads.ufrn.apigestao.domain.dto.seller.*;
+import tads.ufrn.apigestao.service.CommissionHistoryService;
 import tads.ufrn.apigestao.service.PreSaleService;
 import tads.ufrn.apigestao.service.SellerService;
 
@@ -27,6 +30,7 @@ public class SellerController {
 
     private final SellerService service;
     private final PreSaleService preSaleService;
+    private final CommissionHistoryService commissionHistoryService;
 
     @PreAuthorize("hasAnyRole('SUPERADMIN','VENDEDOR')")
     @GetMapping("/all")
@@ -71,5 +75,15 @@ public class SellerController {
 
         SellerCommissionDTO dto = preSaleService.getCommissionByPeriod(id, startDate, endDate, saveHistory);
         return ResponseEntity.ok(dto);
+    }
+
+    @PreAuthorize("hasAnyRole('SUPERADMIN','FUNCIONARIO')")
+    @GetMapping("/commission-history")
+    public Page<CommissionHistoryDTO> getCommissionHistory(
+            @RequestParam(required = false) Long sellerId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return commissionHistoryService.getBySeller( sellerId, page, size);
     }
 }

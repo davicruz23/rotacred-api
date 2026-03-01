@@ -1,5 +1,7 @@
 package tads.ufrn.apigestao.repository;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -126,12 +128,12 @@ public interface SaleRepository extends JpaRepository<Sale, Long> {
       AND (:name IS NULL OR LOWER(c.name) LIKE LOWER(CONCAT('%', :name, '%')))
       AND (:cpf IS NULL OR c.cpf = :cpf)
       AND (:city IS NULL OR LOWER(a.city) LIKE LOWER(CONCAT('%', :city, '%')))
-    ORDER BY s.saleDate DESC
 """)
-    List<SaleSearchDTO> searchSales(
+    Page<SaleSearchDTO> searchSales(
             @Param("name") String name,
             @Param("id") Long id,
             @Param("cpf") String cpf,
-            @Param("city") String city
+            @Param("city") String city,
+            Pageable pageable
     );
 }

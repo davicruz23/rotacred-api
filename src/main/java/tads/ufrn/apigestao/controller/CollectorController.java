@@ -2,6 +2,7 @@ package tads.ufrn.apigestao.controller;
 
 import com.google.zxing.WriterException;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
@@ -16,6 +17,7 @@ import tads.ufrn.apigestao.domain.Installment;
 import tads.ufrn.apigestao.domain.Sale;
 import tads.ufrn.apigestao.domain.dto.LocationSaleDTO;
 import tads.ufrn.apigestao.domain.dto.collector.*;
+import tads.ufrn.apigestao.domain.dto.commissionHistory.CommissionHistoryDTO;
 import tads.ufrn.apigestao.domain.dto.inspector.InspectorIdUserDTO;
 import tads.ufrn.apigestao.domain.dto.installment.InstallmentPaidDTO;
 import tads.ufrn.apigestao.domain.dto.sale.AssignSalesCollectorRequest;
@@ -42,6 +44,7 @@ public class CollectorController {
     private final PixService pixService;
     private final ApprovalLocationService approvalLocationService;
     private final SaleService saleService;
+    private final CommissionHistoryService commissionHistoryService;
 
     @PreAuthorize("hasAnyRole('SUPERADMIN','COBRADOR')")
     @PostMapping("/{collectorId}/assign/{city}")
@@ -202,5 +205,17 @@ public class CollectorController {
 
         return ResponseEntity.ok(response);
     }
+
+    @PreAuthorize("hasAnyRole('SUPERADMIN','FUNCIONARIO')")
+    @GetMapping("/commission-history")
+    public Page<CommissionHistoryDTO> getCommissionHistory(
+            @RequestParam(required = false) Long collectorId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return commissionHistoryService.getByCollector( collectorId, page, size);
+    }
+
+
 
 }

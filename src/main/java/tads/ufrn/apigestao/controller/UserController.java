@@ -42,7 +42,7 @@ public class UserController {
     }
 
     @PreAuthorize("hasAnyRole('SUPERADMIN')")
-    @PostMapping("/{id}/update/password")
+    @PatchMapping("/{id}/password")
     public ResponseEntity<Void> updatePassword(@PathVariable Long id, @RequestBody UpdatePasswordDTO dto) {
         service.updatePassword(id, dto);
         return ResponseEntity.noContent().build();
