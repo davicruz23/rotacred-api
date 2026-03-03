@@ -128,6 +128,21 @@ public interface SaleRepository extends JpaRepository<Sale, Long> {
       AND (:name IS NULL OR LOWER(c.name) LIKE LOWER(CONCAT('%', :name, '%')))
       AND (:cpf IS NULL OR c.cpf = :cpf)
       AND (:city IS NULL OR LOWER(a.city) LIKE LOWER(CONCAT('%', :city, '%')))
+    AND EXISTS (
+        SELECT 1
+        FROM PreSaleItem psi
+        WHERE psi.preSale = ps
+          AND (
+              psi.quantity >
+              COALESCE(
+                  (SELECT SUM(sr.quantityReturned)
+                   FROM SaleReturn sr
+                   WHERE sr.sale = s
+                     AND sr.productId = psi.product.id),
+                  0
+              )
+          )
+    )
 """)
     Page<SaleSearchDTO> searchSales(
             @Param("name") String name,
