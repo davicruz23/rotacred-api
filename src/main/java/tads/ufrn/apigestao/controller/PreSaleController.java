@@ -35,16 +35,18 @@ public class PreSaleController {
         return ResponseEntity.ok().body(PreSaleMapper.mapper(service.findById(id)));
     }
 
-    @PreAuthorize("hasAnyRole('SUPERADMIN','VENDEDOR','FISCAL')")
     @PostMapping
     public ResponseEntity<?> store(@RequestBody UpsertPreSaleDTO model) {
+
+        System.out.println("recebi: "+model );
+
         try {
-            PreSale savedPreSale = service.store(model);
-            PreSaleDTO dto = PreSaleMapper.mapper(savedPreSale);
+
+            PreSaleDTO dto = service.store(model);
 
             URI uri = ServletUriComponentsBuilder
                     .fromCurrentRequest().path("/{id}")
-                    .buildAndExpand(savedPreSale.getId())
+                    .buildAndExpand(dto.getId())
                     .toUri();
 
             return ResponseEntity.created(uri).body(dto);

@@ -26,6 +26,9 @@ public class PreSale {
 
     private BigDecimal totalPreSale;
 
+    @Column(unique = true)
+    private String uuidPreSale;
+
     @ManyToOne
     @JoinColumn(name = "seller_id", nullable = false)
     private Seller seller;

@@ -23,4 +23,5 @@ public class UpsertPreSaleDTO {
     private UpsertClientDTO client;
     private List<UpsertPreSaleItemDTO> products;
     private Long chargingId;
+    private String uuidPreSale;
 }

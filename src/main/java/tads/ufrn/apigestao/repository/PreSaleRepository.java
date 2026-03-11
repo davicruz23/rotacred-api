@@ -9,6 +9,7 @@ import tads.ufrn.apigestao.domain.Sale;
 import tads.ufrn.apigestao.enums.PreSaleStatus;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface PreSaleRepository extends JpaRepository<PreSale, Long> {
@@ -43,5 +44,7 @@ public interface PreSaleRepository extends JpaRepository<PreSale, Long> {
     List<PreSale> findAllByInspectorId(@Param("inspectorId") Long inspectorId);
 
     Long countByStatus(PreSaleStatus status);
+
+    Optional<PreSale> findByUuidPreSale(String uuid);
 
 }

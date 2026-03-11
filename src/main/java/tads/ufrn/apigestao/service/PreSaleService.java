@@ -5,8 +5,10 @@ import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tads.ufrn.apigestao.controller.mapper.InspectorMapper;
+import tads.ufrn.apigestao.controller.mapper.PreSaleMapper;
 import tads.ufrn.apigestao.domain.*;
 import tads.ufrn.apigestao.domain.dto.inspector.InspectorHistoryPreSaleDTO;
+import tads.ufrn.apigestao.domain.dto.preSale.PreSaleDTO;
 import tads.ufrn.apigestao.domain.dto.preSale.UpsertPreSaleDTO;
 import tads.ufrn.apigestao.domain.dto.preSaleItem.UpsertPreSaleItemDTO;
 import tads.ufrn.apigestao.domain.dto.seller.SellerCommissionDTO;
@@ -45,10 +47,16 @@ public class PreSaleService {
     }
 
     @Transactional
-    public PreSale store(UpsertPreSaleDTO dto) {
+    public PreSaleDTO store(UpsertPreSaleDTO dto) {
+        System.out.println("Charging ID recebido: " + dto.getChargingId());
+
+        Optional<PreSale> existing = repository.findByUuidPreSale(dto.getUuidPreSale());
+
+        if(existing.isPresent()){
+            return PreSaleMapper.mapper(existing.get());
+        }
 
         Client client = clientService.store(dto.getClient());
-
         Seller seller = sellerService.findById(dto.getSellerId());
 
         if (seller == null) {
@@ -64,11 +72,12 @@ public class PreSaleService {
         preSale.setInspector(inspector);
         preSale.setStatus(PreSaleStatus.PENDENTE);
         preSale.setItems(new ArrayList<>());
+        preSale.setUuidPreSale(dto.getUuidPreSale());
 
         Charging charging = changingService.findEntityById(dto.getChargingId());
 
         for (UpsertPreSaleItemDTO prodDTO : dto.getProducts()) {
-            assert charging != null;
+
             ChargingItem ci = charging.getItems().stream()
                     .filter(item -> item.getProduct().getId().equals(prodDTO.getProductId()))
                     .findFirst()
@@ -85,6 +94,7 @@ public class PreSaleService {
             preSaleItem.setProduct(ci.getProduct());
             preSaleItem.setChargingItem(ci);
             preSaleItem.setQuantity(prodDTO.getQuantity());
+
             preSale.getItems().add(preSaleItem);
         }
 
@@ -98,8 +108,9 @@ public class PreSaleService {
 
         preSale.setTotalPreSale(totalPreSale);
 
+        PreSale saved = repository.save(preSale);
 
-        return repository.save(preSale);
+        return PreSaleMapper.mapper(saved);
     }
 
     public void deleteById(Long id){

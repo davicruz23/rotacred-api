@@ -28,6 +28,7 @@ public class AuthService {
         Optional<User> userOptional = userRepository.findByCpf(loginDTO.getCpf());
 
         if (userOptional.isPresent()) {
+            System.out.println("usuario logado: " + userOptional.get());
             User user = userOptional.get();
             if (passwordEncoder.matches(loginDTO.getPassword(), user.getPassword())) {
                 return user;
