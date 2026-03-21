@@ -33,7 +33,7 @@ public class SaleReturnController {
 //        return service.returnSale(saleId, request);
 //    }
 
-    @PreAuthorize("hasAnyRole('SUPERADMIN','FUNCIONARIO')")
+    @PreAuthorize("hasAnyRole('SUPERADMIN','FUNCIONARIO', 'COBRADOR')")
     @PostMapping("/sales/{saleId}/returns")
     public ResponseEntity<List<SaleReturnDTO>> returnSale(@PathVariable Long saleId, @Valid @RequestBody ReturnSaleRequest request) {
         List<SaleReturnDTO> response = service.returnSale(saleId, request);
