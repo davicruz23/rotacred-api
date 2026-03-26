@@ -104,7 +104,10 @@ public class SaleReturnService {
         installmentRepository.saveAll(futureInstallments);
     }
 
-    private BigDecimal calculateDiscount(Sale sale, ReturnSaleRequest request) {
+    private BigDecimal calculateDiscount(
+            Sale sale,
+            ReturnSaleRequest request
+    ) {
 
         Map<Long, PreSaleItem> saleItemsMap =
                 sale.getPreSale().getItems().stream()
@@ -125,18 +128,22 @@ public class SaleReturnService {
                 );
             }
 
-            int alreadyReturned = saleReturnRepository
-                    .sumReturnedQuantity(sale.getId(), dto.getProductId());
+            // 🔥 Só valida se NÃO for DANIFICADO
+            if (!true) {
 
-            int availableToReturn = item.getQuantity() - alreadyReturned;
+                int alreadyReturned = saleReturnRepository
+                        .sumReturnedQuantity(sale.getId(), dto.getProductId());
 
-            if (dto.getQuantityReturned() <= 0 ||
-                    dto.getQuantityReturned() > availableToReturn) {
+                int availableToReturn = item.getQuantity() - alreadyReturned;
 
-                throw new BusinessException(
-                        "Quantidade inválida. Disponível para devolução: "
-                                + availableToReturn
-                );
+                if (dto.getQuantityReturned() <= 0 ||
+                        dto.getQuantityReturned() > availableToReturn) {
+
+                    throw new BusinessException(
+                            "Quantidade inválida. Disponível para devolução: "
+                                    + availableToReturn
+                    );
+                }
             }
 
             BigDecimal unitPrice = item.getProduct().getValue();
