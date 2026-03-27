@@ -26,16 +26,7 @@ public class CollectionAttemptService {
     private final CollectorRepository collectorRepository;
 
     @Transactional
-    public CollectionAttemptDTO recordAttempt(
-            Long collectorId,
-            Long installmentId,
-            Double amount,
-            PaymentType paymentMethod,
-            Double latitude,
-            Double longitude,
-            String note,
-            LocalDateTime newDueDate
-    ) {
+    public CollectionAttemptDTO recordAttempt(Long collectorId, Long installmentId, CollectionAttemptDTO dto) {
         Collector collector = collectorRepository.findById(collectorId)
                 .orElseThrow(() -> new ResourceNotFoundException("Cobrador não encontrado!"));
 
@@ -46,21 +37,21 @@ public class CollectionAttemptService {
         attempt.setCollector(collector);
         attempt.setInstallment(installment);
         attempt.setAttemptAt(LocalDateTime.now());
-        attempt.setType(amount != null && amount > 0 ? AttemptType.PAYMENT : AttemptType.ATTEMPT);
-        attempt.setAmount(amount);
-        attempt.setPaymentMethod(paymentMethod);
-        attempt.setLatitude(latitude);
-        attempt.setLongitude(longitude);
-        attempt.setNote(note);
-        attempt.setNewDueDate(newDueDate);
+        attempt.setType(dto.getAmount() != null && dto.getAmount() > 0 ? AttemptType.PAYMENT : AttemptType.ATTEMPT);
+        attempt.setAmount(dto.getAmount());
+        attempt.setPaymentMethod(dto.getPaymentMethod());
+        attempt.setLatitude(dto.getLatitude());
+        attempt.setLongitude(dto.getLongitude());
+        attempt.setNote(dto.getNote());
+        attempt.setNewDueDate(dto.getNewDueDate());
 
         // Atualiza parcela se foi pagamento
-        if (amount != null && amount > 0) {
+        if (dto.getAmount() != null && dto.getAmount() > 0) {
             installment.setPaid(true);
             installment.setPaymentDate(LocalDateTime.now());
 
-            if (newDueDate != null) {
-                installment.setDueDate(LocalDate.from(newDueDate));
+            if (dto.getNewDueDate() != null) {
+                installment.setDueDate(dto.getNewDueDate().toLocalDate());
             }
             installmentRepository.save(installment);
         }

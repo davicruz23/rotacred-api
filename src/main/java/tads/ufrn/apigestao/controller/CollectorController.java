@@ -135,12 +135,7 @@ public class CollectorController {
         CollectionAttemptDTO attempt = collectionAttemptService.recordAttempt(
                 collectorId,
                 installmentId,
-                dto.getAmount(),
-                dto.getPaymentMethod(),
-                dto.getLatitude(),
-                dto.getLongitude(),
-                dto.getNote(),
-                dto.getNewDueDate()
+                dto
         );
 
         return ResponseEntity.ok(attempt);

@@ -19,21 +19,15 @@ import java.util.Locale;
 public class CollectionAttemptDTO {
 
     private Long id;
-    private Installment installment;
-    private Collector collector;
     private LocalDateTime attemptAt = LocalDateTime.now();
     private AttemptType type;
     private Double amount;
     private PaymentType paymentMethod;
     private Double latitude;
     private Double longitude;
-    private Double locationAccuracy;
-    private Boolean withinRange;
-    private Double distanceMeters;
     private LocalDateTime newDueDate;
     private String note;
     private LocalDateTime serverRecordedAt = LocalDateTime.now();
-    private String receiptRef;
     private String mapsUrl;
 
     public CollectionAttemptDTO(CollectionAttempt entity) {
