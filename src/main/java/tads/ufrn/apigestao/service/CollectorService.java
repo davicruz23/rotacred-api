@@ -1,6 +1,5 @@
 package tads.ufrn.apigestao.service;
 
-import jakarta.persistence.EntityNotFoundException;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -121,9 +120,7 @@ public class CollectorService {
     }
 
     @Transactional
-    public InstallmentPaidDTO markAsPaid(Long installmentId, BigDecimal amountPaid) {
-
-        System.out.println("chamei o markAsPaid");
+    public void markAsPaid(Long installmentId, BigDecimal amountPaid) {
 
         Installment installment = installmentRepository.findById(installmentId)
                 .orElseThrow(() -> new BusinessException("Parcela não encontrada"));
@@ -144,7 +141,17 @@ public class CollectorService {
             handleRemainingBalance(installment, remaining);
         }
 
-        return new InstallmentPaidDTO(
+        Sale sale = installment.getSale();
+
+        boolean hasOpenInstallment = installmentRepository
+                .existsBySaleIdAndPaidFalse(sale.getId());
+
+        if (!hasOpenInstallment) {
+            sale.setStatus(SaleStatus.FINALIZADO);
+            saleRepository.save(sale);
+        }
+
+        new InstallmentPaidDTO(
                 installment.getId(),
                 installment.getDueDate(),
                 installment.getPaidAmount(),

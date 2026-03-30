@@ -56,11 +56,11 @@ public class ApiGestaoApplication {
 
                 //salva os usuarios
                 List<User> users = new ArrayList<>();
-                users.add(new User(null,"Marlene Balbino","1",passwordEncoder.encode("123"),UserType.SUPERADMIN));
-                users.add(new User(null,"Miriam Balbino","2",passwordEncoder.encode("123"),UserType.FUNCIONARIO));
-                users.add(new User(null,"Gil Bahia","3",passwordEncoder.encode("123"),UserType.FISCAL));
-                users.add(new User(null,"José Santos","4",passwordEncoder.encode("123"),UserType.VENDEDOR));
-                users.add(new User(null,"Carlos Miguelino","5",passwordEncoder.encode("123"),UserType.COBRADOR));
+                users.add(new User(null,"Marlene Balbino","1",passwordEncoder.encode("123456"),UserType.SUPERADMIN));
+                users.add(new User(null,"Miriam Balbino","2",passwordEncoder.encode("123456"),UserType.FUNCIONARIO));
+                users.add(new User(null,"Larissa Barbosa","08202116481",passwordEncoder.encode("123456"),UserType.FISCAL));
+                users.add(new User(null,"Davi Cruz","14522293763",passwordEncoder.encode("123456"),UserType.VENDEDOR));
+                users.add(new User(null,"Elizabete Souza","49832824400",passwordEncoder.encode("123456"),UserType.COBRADOR));
                 userRepository.saveAll(users);
 
                 User carregador = userService.findUserById(2L);

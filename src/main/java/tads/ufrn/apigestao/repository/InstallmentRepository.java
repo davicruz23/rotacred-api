@@ -20,6 +20,8 @@ public interface InstallmentRepository extends JpaRepository<Installment, Long> 
 
     List<Installment> findBySaleId(Long saleId);
 
+    boolean existsBySaleIdAndPaidFalse(Long saleId);
+
     @Query("""
         SELECT COALESCE(SUM(i.paidAmount), 0)
         FROM Installment i

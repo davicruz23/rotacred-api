@@ -10,7 +10,8 @@ public enum SaleStatus {
         DEVOLVIDO_CLIENTE(3, "DEVOLVIDO PARA O CLIENTE"),
         DESISTENCIA(4, "DESISTÊNCIA"),
         REAVIDO(5, "RECUPERADO"),
-        DANIFICADO(6, "DANIFICADO");
+        DANIFICADO(6, "DANIFICADO"),
+        FINALIZADO(7, "FINALIZADO");
 
 
         private final int value;

@@ -89,22 +89,22 @@ public class CollectorController {
 //        return ResponseEntity.ok(salesDTO);
 //    }
 
-    @PreAuthorize("hasAnyRole('SUPERADMIN','COBRADOR')")
-    @PutMapping("/{id}/pay")
-    public ResponseEntity<?> payInstallment(@PathVariable Long id, @RequestParam BigDecimal amount) {
-        System.out.println("chamei primeiro payinstallment");
-        try {
-            InstallmentPaidDTO paidInstallment =
-                    service.markAsPaid(id, amount);
-
-            return ResponseEntity.ok(paidInstallment);
-
-        } catch (RuntimeException e) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(Map.of("error", e.getMessage()));
-        }
-    }
+//    @PreAuthorize("hasAnyRole('SUPERADMIN','COBRADOR')")
+//    @PutMapping("/{id}/pay")
+//    public ResponseEntity<?> payInstallment(@PathVariable Long id, @RequestParam BigDecimal amount) {
+//        System.out.println("chamei primeiro payinstallment");
+//        try {
+//            InstallmentPaidDTO paidInstallment =
+//                    service.markAsPaid(id, amount);
+//
+//            return ResponseEntity.ok(paidInstallment);
+//
+//        } catch (RuntimeException e) {
+//            return ResponseEntity
+//                    .badRequest()
+//                    .body(Map.of("error", e.getMessage()));
+//        }
+//    }
 
 
     @PreAuthorize("hasAnyRole('SUPERADMIN','COBRADOR')")

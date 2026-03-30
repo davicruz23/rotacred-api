@@ -13,6 +13,7 @@ import tads.ufrn.apigestao.exception.BusinessException;
 import tads.ufrn.apigestao.exception.ResourceNotFoundException;
 import tads.ufrn.apigestao.repository.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,16 +25,21 @@ public class CollectionAttemptService {
     private final CollectionAttemptRepository repository;
     private final InstallmentRepository installmentRepository;
     private final CollectorRepository collectorRepository;
+    private final CollectorService collectorService;
 
     @Transactional
     public CollectionAttemptDTO recordAttempt(Long collectorId, Long installmentId, CollectionAttemptDTO dto) {
 
-        System.out.println("chamei o record attempt na hora de salvar a parcela!");
         Collector collector = collectorRepository.findById(collectorId)
                 .orElseThrow(() -> new ResourceNotFoundException("Cobrador não encontrado!"));
 
         Installment installment = installmentRepository.findById(installmentId)
                 .orElseThrow(() -> new BusinessException("Parcela não encontrada!"));
+
+        // Só chama se for pagamento
+        if (dto.getAmount() != null && dto.getAmount() > 0) {
+            collectorService.markAsPaid(installmentId, BigDecimal.valueOf(dto.getAmount()));
+        }
 
         CollectionAttempt attempt = new CollectionAttempt();
         attempt.setCollector(collector);
@@ -46,17 +52,6 @@ public class CollectionAttemptService {
         attempt.setLongitude(dto.getLongitude());
         attempt.setNote(dto.getNote());
         attempt.setNewDueDate(dto.getNewDueDate());
-
-        // Atualiza parcela se foi pagamento
-        if (dto.getAmount() != null && dto.getAmount() > 0) {
-            installment.setPaid(true);
-            installment.setPaymentDate(LocalDateTime.now());
-
-            if (dto.getNewDueDate() != null) {
-                installment.setDueDate(dto.getNewDueDate().toLocalDate());
-            }
-            installmentRepository.save(installment);
-        }
 
         CollectionAttempt savedAttempt = repository.save(attempt);
 
