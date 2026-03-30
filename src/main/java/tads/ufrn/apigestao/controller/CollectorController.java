@@ -74,8 +74,8 @@ public class CollectorController {
 
     @PreAuthorize("hasAnyRole('SUPERADMIN','COBRADOR')")
     @GetMapping("/all/sales")
-    public ResponseEntity<List<CollectorDTO>> findAll(@RequestParam(required = false) Integer status, @RequestParam(required = false) Long collectorId) {
-        return ResponseEntity.ok(service.findAll(status, collectorId));
+    public ResponseEntity<List<CollectorDTO>> findAll(@RequestParam(required = false) Integer status, @RequestParam(required = false) Long collectorId, @RequestParam(required = false) Boolean fullPaid) {
+        return ResponseEntity.ok(service.findAll(status, collectorId, fullPaid));
     }
 
     @PreAuthorize("hasAnyRole('SUPERADMIN','COBRADOR')")
@@ -92,7 +92,7 @@ public class CollectorController {
     @PreAuthorize("hasAnyRole('SUPERADMIN','COBRADOR')")
     @PutMapping("/{id}/pay")
     public ResponseEntity<?> payInstallment(@PathVariable Long id, @RequestParam BigDecimal amount) {
-
+        System.out.println("chamei primeiro payinstallment");
         try {
             InstallmentPaidDTO paidInstallment =
                     service.markAsPaid(id, amount);
@@ -132,6 +132,7 @@ public class CollectorController {
     @PreAuthorize("hasAnyRole('SUPERADMIN','COBRADOR')")
     @PutMapping("/{collectorId}/installment/{installmentId}/collect")
     public ResponseEntity<CollectionAttemptDTO> collectInstallment(@PathVariable Long collectorId, @PathVariable Long installmentId, @RequestBody CollectionAttemptDTO dto) {
+        System.out.println("agora chamei o collectInstallment");
         CollectionAttemptDTO attempt = collectionAttemptService.recordAttempt(
                 collectorId,
                 installmentId,

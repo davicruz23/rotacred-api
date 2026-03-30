@@ -2,10 +2,7 @@ package tads.ufrn.apigestao.controller.mapper;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import tads.ufrn.apigestao.domain.CollectionAttempt;
-import tads.ufrn.apigestao.domain.PreSaleItem;
-import tads.ufrn.apigestao.domain.Sale;
-import tads.ufrn.apigestao.domain.SaleReturn;
+import tads.ufrn.apigestao.domain.*;
 import tads.ufrn.apigestao.domain.dto.installment.InstallmentDTO;
 import tads.ufrn.apigestao.domain.dto.installment.InstallmentStatusDTO;
 import tads.ufrn.apigestao.domain.dto.product.ProductDTO;
@@ -80,8 +77,17 @@ public class SaleMapper {
                     .toList();
         }
 
+        boolean fullPaid = false;
+
+        if (src.getInstallmentsEntities() != null && !src.getInstallmentsEntities().isEmpty()) {
+            fullPaid = src.getInstallmentsEntities()
+                    .stream()
+                    .allMatch(Installment::isPaid);
+        }
+
         return SaleDTO.builder()
                 .id(src.getId())
+                .fullPaid(fullPaid)
                 .numberSale(src.getNumberSale())
                 .saleDate(
                         src.getSaleDate()

@@ -23,16 +23,41 @@ public interface CollectorRepository extends JpaRepository<Collector, Long> {
                                                          @Param("endDate") LocalDate endDate);
 
     @Query("""
-    SELECT c
+    SELECT DISTINCT c
     FROM Collector c
-    JOIN c.sales s
+    JOIN FETCH c.sales s
     WHERE (:collectorId IS NULL OR c.id = :collectorId)
       AND (:status IS NULL OR s.status = :status)
-    GROUP BY c
-    HAVING COUNT(s) > 0
+
+      AND (
+          :fullPaid IS NULL
+
+          OR (
+
+              :fullPaid = true AND NOT EXISTS (
+                  SELECT 1
+                  FROM Installment i
+                  WHERE i.sale = s
+                    AND i.paid = false
+              )
+
+          )
+
+          OR (
+
+              :fullPaid = false AND EXISTS (
+                  SELECT 1
+                  FROM Installment i
+                  WHERE i.sale = s
+                    AND i.paid = false
+              )
+
+          )
+      )
 """)
     List<Collector> findCollectorsWithSales(
             @Param("status") SaleStatus status,
-            @Param("collectorId") Long collectorId
+            @Param("collectorId") Long collectorId,
+            @Param("fullPaid") Boolean fullPaid
     );
 }

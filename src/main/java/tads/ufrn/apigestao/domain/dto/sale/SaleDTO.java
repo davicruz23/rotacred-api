@@ -20,6 +20,7 @@ import java.util.List;
 public class SaleDTO {
 
     private Long id;
+    private Boolean fullPaid;
     private String numberSale;
     private String saleDate;
     private String paymentType;

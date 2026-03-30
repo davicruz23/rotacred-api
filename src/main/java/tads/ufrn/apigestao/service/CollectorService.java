@@ -41,7 +41,7 @@ public class CollectorService {
     }
 
     @Transactional(readOnly = true)
-    public List<CollectorDTO> findAll(Integer status, Long collectorId) {
+    public List<CollectorDTO> findAll(Integer status, Long collectorId, Boolean fullPaid) {
 
         SaleStatus statusEnum = null;
 
@@ -50,7 +50,7 @@ public class CollectorService {
         }
 
         List<Collector> collectors =
-                repository.findCollectorsWithSales(statusEnum, collectorId);
+                repository.findCollectorsWithSales(statusEnum, collectorId, fullPaid);
 
         for (Collector collector : collectors) {
 
@@ -122,6 +122,8 @@ public class CollectorService {
 
     @Transactional
     public InstallmentPaidDTO markAsPaid(Long installmentId, BigDecimal amountPaid) {
+
+        System.out.println("chamei o markAsPaid");
 
         Installment installment = installmentRepository.findById(installmentId)
                 .orElseThrow(() -> new BusinessException("Parcela não encontrada"));

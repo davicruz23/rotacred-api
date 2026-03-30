@@ -27,6 +27,8 @@ public class CollectionAttemptService {
 
     @Transactional
     public CollectionAttemptDTO recordAttempt(Long collectorId, Long installmentId, CollectionAttemptDTO dto) {
+
+        System.out.println("chamei o record attempt na hora de salvar a parcela!");
         Collector collector = collectorRepository.findById(collectorId)
                 .orElseThrow(() -> new ResourceNotFoundException("Cobrador não encontrado!"));
 

@@ -128,7 +128,8 @@ public interface SaleRepository extends JpaRepository<Sale, Long> {
       AND (:name IS NULL OR LOWER(c.name) LIKE LOWER(CONCAT('%', :name, '%')))
       AND (:cpf IS NULL OR c.cpf = :cpf)
       AND (:city IS NULL OR LOWER(a.city) LIKE LOWER(CONCAT('%', :city, '%')))
-    AND EXISTS (
+
+      AND EXISTS (
         SELECT 1
         FROM PreSaleItem psi
         WHERE psi.preSale = ps
@@ -142,7 +143,17 @@ public interface SaleRepository extends JpaRepository<Sale, Long> {
                   0
               )
           )
-    )
+      )
+
+      AND (
+          (SELECT COUNT(i) FROM Installment i WHERE i.sale = s) <= 2
+          OR EXISTS (
+              SELECT 1
+              FROM Installment i
+              WHERE i.sale = s
+                AND i.paid = false
+          )
+      )
 """)
     Page<SaleSearchDTO> searchSales(
             @Param("name") String name,
