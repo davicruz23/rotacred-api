@@ -77,8 +77,13 @@ public class ChargingService {
 
 
     @Transactional(readOnly = true)
-    public List<ChargingDTO> findCurrent() {
-        return repository.findAllCurrentWithItems()
+    public List<ChargingDTO> findCurrent(String nameProduct, String brand) {
+
+        String search = (nameProduct != null && !nameProduct.isEmpty())
+                ? nameProduct
+                : brand;
+
+        return repository.findAllCurrentWithItems(search)
                 .stream()
                 .map(ChargingMapper::mapper)
                 .toList();

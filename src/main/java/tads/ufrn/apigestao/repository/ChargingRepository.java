@@ -79,10 +79,16 @@ public interface ChargingRepository extends JpaRepository<Charging, Long> {
     @Query("""
     SELECT DISTINCT c
     FROM Charging c
-    LEFT JOIN FETCH c.items
+    LEFT JOIN FETCH c.items i
+    LEFT JOIN i.product p
     WHERE c.deletedAt IS NULL
+    AND (
+        :search IS NULL
+        OR LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%'))
+        OR LOWER(p.brand) LIKE LOWER(CONCAT('%', :search, '%'))
+    )
 """)
-    List<Charging> findAllCurrentWithItems();
+    List<Charging> findAllCurrentWithItems(@Param("search") String search);
 
     @Query("""
     SELECT DISTINCT c

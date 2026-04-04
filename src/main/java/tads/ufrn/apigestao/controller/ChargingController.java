@@ -34,8 +34,11 @@ public class ChargingController {
 
     @PreAuthorize("hasAnyRole('SUPERADMIN','VENDEDOR','FUNCIONARIO')")
     @GetMapping("/current")
-    public ResponseEntity<List<ChargingDTO>> findCurrent() {
-        return ResponseEntity.ok(service.findCurrent());
+    public ResponseEntity<List<ChargingDTO>> findCurrent(
+            @RequestParam(required = false) String nameProduct,
+            @RequestParam(required = false) String brand) {
+
+        return ResponseEntity.ok(service.findCurrent(nameProduct, brand));
     }
 
     @PreAuthorize("hasAnyRole('SUPERADMIN','VENDEDOR','FUNCIONARIO')")
