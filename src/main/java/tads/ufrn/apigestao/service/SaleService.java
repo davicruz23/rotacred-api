@@ -8,6 +8,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tads.ufrn.apigestao.domain.*;
+import tads.ufrn.apigestao.domain.dto.preSale.PreSaleDTO;
+import tads.ufrn.apigestao.domain.dto.preSale.UpsertPreSaleDTO;
 import tads.ufrn.apigestao.domain.dto.product.ProductItemDTO;
 import tads.ufrn.apigestao.domain.dto.sale.*;
 import tads.ufrn.apigestao.enums.PaymentType;
@@ -126,6 +128,29 @@ public class SaleService {
         }
 
         return sale;
+    }
+
+    @Transactional
+    public Sale storeAndApprovePreSale(
+            UpsertPreSaleDTO preSaleDTO,
+            Inspector inspector,
+            PaymentType paymentMethod,
+            int installments,
+            BigDecimal cashPaid,
+            Double latitude,
+            Double longitude
+    ) {
+        PreSaleDTO savedPreSale = preSaleService.store(preSaleDTO);
+
+        return approvePreSale(
+                savedPreSale.getId(),
+                inspector,
+                paymentMethod,
+                installments,
+                cashPaid,
+                latitude,
+                longitude
+        );
     }
 
     public List<SalesByCityDTO> getSalesGroupedByCity() {
