@@ -4,9 +4,11 @@ package tads.ufrn.apigestao.service;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import tads.ufrn.apigestao.controller.mapper.SaleMapper;
 import tads.ufrn.apigestao.domain.*;
 import tads.ufrn.apigestao.domain.dto.preSale.PreSaleDTO;
 import tads.ufrn.apigestao.domain.dto.preSale.UpsertPreSaleDTO;
@@ -35,8 +37,31 @@ public class SaleService {
     private final ModelMapper mapper;
     private final SaleReturnRepository saleReturnRepository;
 
-    public List<Sale> findAll(){
-        return repository.findAll();
+    @Transactional(readOnly = true)
+    public Page<SalesListDTO> findAll(
+            int page,
+            int size,
+            String clientName,
+            String cpf,
+            Integer status,
+            LocalDate saleDate
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+
+        SaleStatus saleStatus = null;
+
+        if (status != null && status != 0) {
+            saleStatus = SaleStatus.fromValue(status);
+        }
+
+        return repository.findAllWithFilters(
+                        clientName,
+                        cpf,
+                        saleStatus,
+                        saleDate,
+                        pageable
+                )
+                .map(SaleMapper::salesList);
     }
 
     public Sale findById(Long id) {
@@ -194,6 +219,38 @@ public class SaleService {
         }
 
         return result;
+    }
+
+    @Transactional
+    public void changeOpenInstallmentsDueDate(Long saleId, LocalDate firstDueDate) {
+        Sale sale = repository.findById(saleId)
+                .orElseThrow(() -> new RuntimeException("Venda não encontrada."));
+
+        List<Installment> installments = installmentRepository
+                .findBySaleIdOrderByDueDateAsc(sale.getId());
+
+        if (installments.isEmpty()) {
+            throw new RuntimeException("Venda não possui parcelas.");
+        }
+
+        boolean hasOpenInstallment = installments.stream()
+                .anyMatch(installment -> installment.getPaymentDate() == null);
+
+        if (!hasOpenInstallment) {
+            throw new RuntimeException("Venda não possui parcelas em aberto.");
+        }
+
+        LocalDate currentDueDate = firstDueDate;
+
+        for (Installment installment : installments) {
+            if (installment.getPaymentDate() == null) {
+                installment.setDueDate(currentDueDate);
+            }
+
+            currentDueDate = currentDueDate.plusDays(30);
+        }
+
+        installmentRepository.saveAll(installments);
     }
 
     @Transactional

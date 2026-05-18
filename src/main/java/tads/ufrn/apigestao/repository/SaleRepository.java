@@ -11,6 +11,7 @@ import tads.ufrn.apigestao.domain.Sale;
 import tads.ufrn.apigestao.domain.dto.dashboard.DashboardSaleDTO;
 import tads.ufrn.apigestao.domain.dto.sale.SaleSearchDTO;
 import tads.ufrn.apigestao.domain.dto.sale.SalesByCityDTO;
+import tads.ufrn.apigestao.enums.SaleStatus;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -27,6 +28,35 @@ public interface SaleRepository extends JpaRepository<Sale, Long> {
     GROUP BY c.address.city
 """)
     List<SalesByCityDTO> countSaleByCity();
+
+    @Query("""
+    SELECT s
+    FROM Sale s
+    WHERE EXISTS (
+        SELECT i
+        FROM Installment i
+        WHERE i.sale = s
+        AND i.paymentDate IS NULL
+        AND i.amount > 0
+    )
+""")
+    Page<Sale> findAllWithOpenInstallments(Pageable pageable);
+
+    @Query("""
+    SELECT s
+    FROM Sale s
+    WHERE (:clientName IS NULL OR LOWER(s.preSale.client.name) LIKE LOWER(CONCAT('%', :clientName, '%')))
+    AND (:cpf IS NULL OR s.preSale.client.cpf = :cpf)
+    AND (:status IS NULL OR s.status = :status)
+    AND (:saleDate IS NULL OR s.saleDate = :saleDate)
+""")
+    Page<Sale> findAllWithFilters(
+            @Param("clientName") String clientName,
+            @Param("cpf") String cpf,
+            @Param("status") SaleStatus status,
+            @Param("saleDate") LocalDate saleDate,
+            Pageable pageable
+    );
 
     @Query("""
     SELECT s

@@ -4,14 +4,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import tads.ufrn.apigestao.domain.*;
 import tads.ufrn.apigestao.domain.dto.installment.InstallmentDTO;
+import tads.ufrn.apigestao.domain.dto.installment.InstallmentListSalesDTO;
 import tads.ufrn.apigestao.domain.dto.installment.InstallmentStatusDTO;
 import tads.ufrn.apigestao.domain.dto.product.ProductDTO;
 import tads.ufrn.apigestao.domain.dto.product.ProductSaleDTO;
 import tads.ufrn.apigestao.domain.dto.returnSale.SaleReturnInfoDTO;
-import tads.ufrn.apigestao.domain.dto.sale.SaleCollectorDTO;
-import tads.ufrn.apigestao.domain.dto.sale.SaleDTO;
-import tads.ufrn.apigestao.domain.dto.sale.SaleLocationDTO;
-import tads.ufrn.apigestao.domain.dto.sale.SaleReturnDTO;
+import tads.ufrn.apigestao.domain.dto.sale.*;
 import tads.ufrn.apigestao.enums.SaleStatus;
 import tads.ufrn.apigestao.repository.CollectionAttemptRepository;
 
@@ -164,6 +162,61 @@ public class SaleMapper {
                                 .toList()
                 )
                 .saleReturns(saleReturnInfos)
+                .build();
+    }
+
+    public static SalesListDTO salesList(Sale src) {
+        return SalesListDTO.builder()
+                .id(src.getId())
+                .saleDate(
+                        src.getSaleDate()
+                                .format(DateTimeFormatter.ofPattern("dd/MM/yyyy", new Locale("pt", "BR")))
+                )
+                .clientName(src.getPreSale().getClient().getName())
+                .paymentType(src.getPaymentMethod().getDescription())
+                .nParcel(src.getInstallments())
+
+                .products(
+                        src.getPreSale().getItems().stream()
+                                .map(item -> {
+
+                                    BigDecimal valorTotal =
+                                            item.getProduct()
+                                                    .getValue()
+                                                    .multiply(BigDecimal.valueOf(item.getQuantity()));
+
+                                    return ProductMapper.mapperProductSale(
+                                            item.getProduct(),
+                                            item.getQuantity(),
+                                            valorTotal
+                                    );
+                                })
+                                .toList()
+                )
+
+                .installments(
+                        src.getInstallmentsEntities().stream()
+                                .map(inst -> {
+
+                                    BigDecimal amount;
+                                    if (inst.isPaid()) {
+                                        amount = inst.getPaidAmount() != null ? inst.getPaidAmount() : inst.getAmount();
+                                    } else {
+                                        amount = inst.getAmount();
+                                    }
+
+                                    return InstallmentListSalesDTO.builder()
+                                            .id(inst.getId())
+                                            .dueDate(
+                                                    inst.getDueDate()
+                                                            .format(DateTimeFormatter.ofPattern(
+                                                                    "dd/MM/yyyy", new Locale("pt", "BR")))
+                                            )
+                                            .amount(amount)
+                                            .build();
+                                })
+                                .toList()
+                )
                 .build();
     }
 
