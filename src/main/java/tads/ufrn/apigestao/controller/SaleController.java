@@ -78,7 +78,8 @@ public class SaleController {
                 inspector,
                 dto.getPaymentMethod(),
                 dto.getInstallments(),
-                dto.getCashPaid()
+                dto.getCashPaid(),
+                dto.getSaleDate()
         );
 
         return ResponseEntity.status(HttpStatus.CREATED).body(SaleMapper.mapper(sale));

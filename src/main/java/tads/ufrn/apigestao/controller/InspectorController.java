@@ -94,7 +94,8 @@ public class InspectorController {
                 dto.getInstallments(),
                 dto.getCashPaid(),
                 dto.getLatitude(),
-                dto.getLongitude()
+                dto.getLongitude(),
+                null
         );
 
         return ResponseEntity.ok(SaleMapper.toDTO(sale));

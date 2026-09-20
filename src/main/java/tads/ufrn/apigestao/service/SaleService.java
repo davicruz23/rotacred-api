@@ -116,13 +116,26 @@ public class SaleService {
     }
 
     @Transactional
-    public Sale approvePreSale(Long preSaleId, Inspector inspector, PaymentType paymentMethod, int installments, BigDecimal cashPaid, Double latitude, Double longitude) {
+    public Sale approvePreSale(
+            Long preSaleId,
+            Inspector inspector,
+            PaymentType paymentMethod,
+            int installments,
+            BigDecimal cashPaid,
+            Double latitude,
+            Double longitude,
+            LocalDate saleDate
+    ) {
 
         PreSale preSale = preSaleService.approvePreSale(preSaleId, inspector);
 
+        LocalDate effectiveSaleDate = saleDate != null
+                ? saleDate
+                : LocalDate.now();
+
         Sale sale = new Sale();
         sale.setPreSale(preSale);
-        sale.setSaleDate(LocalDate.now());
+        sale.setSaleDate(effectiveSaleDate);
         sale.setNumberSale(UUID.randomUUID().toString());
         sale.setInstallments(installments);
         sale.setPaymentMethod(paymentMethod);
@@ -155,7 +168,7 @@ public class SaleService {
             upfront.setAmount(cashPaid);
             upfront.setPaid(true);
             upfront.setPaymentDate(LocalDateTime.now());
-            upfront.setDueDate(LocalDate.now());
+            upfront.setDueDate(effectiveSaleDate);
             upfront.setPaymentType(PaymentType.CASH);
             upfront.setCommissionable(false);
 
@@ -173,7 +186,7 @@ public class SaleService {
                     RoundingMode.HALF_UP
             );
 
-            LocalDate firstDueDate = sale.getSaleDate().plusDays(30);
+            LocalDate firstDueDate = effectiveSaleDate.plusDays(30);
 
             for (int i = 0; i < installments; i++) {
                 Installment inst = new Installment();
@@ -196,8 +209,16 @@ public class SaleService {
             Inspector inspector,
             PaymentType paymentMethod,
             int installments,
-            BigDecimal cashPaid
+            BigDecimal cashPaid,
+            LocalDate saleDate
     ) {
+
+        LocalDate effectiveSaleDate = saleDate != null
+                ? saleDate
+                : LocalDate.now();
+
+        preSaleDTO.setPreSaleDate(effectiveSaleDate);
+
         PreSaleDTO savedPreSale = preSaleService.store(preSaleDTO);
 
         PreSale preSale = preSaleService.findById(savedPreSale.getId());
@@ -231,7 +252,8 @@ public class SaleService {
                 installments,
                 cashPaid,
                 latitude,
-                longitude
+                longitude,
+                effectiveSaleDate
         );
     }
 

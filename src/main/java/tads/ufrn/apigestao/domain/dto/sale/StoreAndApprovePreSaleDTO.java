@@ -9,6 +9,7 @@ import tads.ufrn.apigestao.domain.dto.preSale.UpsertPreSaleDTO;
 import tads.ufrn.apigestao.enums.PaymentType;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Data
 @AllArgsConstructor
@@ -31,4 +32,6 @@ public class StoreAndApprovePreSaleDTO {
     private Double latitude;
 
     private Double longitude;
+
+    private LocalDate saleDate;
 }
