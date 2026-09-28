@@ -426,6 +426,24 @@ public class CollectorService {
                         .findTopByInstallmentIdOrderByAttemptAtDesc(installmentId)
                         .orElseThrow(() -> new BusinessException("Tentativa não encontrada"));
 
+        return isAttemptWithinApprovalLocation(attempt);
+    }
+
+    public boolean isAttemptWithinApprovalLocation(CollectionAttempt attempt) {
+        if (attempt == null
+                || attempt.getInstallment() == null
+                || !attempt.getInstallment().isPaid()
+                || attempt.getLatitude() == null
+                || attempt.getLongitude() == null) {
+            return false;
+        }
+
+        Sale sale = attempt.getInstallment().getSale();
+
+        ApprovalLocation approvalLocation =
+                approvalLocationRepository.findBySaleId(sale.getId())
+                        .orElseThrow(() -> new BusinessException("Local de aprovaÃ§Ã£o nÃ£o encontrado"));
+
         double distance = distanceInMeters(
                 approvalLocation.getLatitude(),
                 approvalLocation.getLongitude(),

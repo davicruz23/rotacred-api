@@ -9,6 +9,7 @@ import tads.ufrn.apigestao.domain.dto.location.CollectorRouteDTO;
 import tads.ufrn.apigestao.domain.dto.location.CollectorTrackingDTO;
 import tads.ufrn.apigestao.service.TrackingService;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -35,11 +36,11 @@ public class TrackingController {
 
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-            LocalDateTime start,
+            LocalDate start,
 
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-            LocalDateTime end
+            LocalDate end
     ) {
         return ResponseEntity.ok(
                 trackingService.getCollectorRoute(

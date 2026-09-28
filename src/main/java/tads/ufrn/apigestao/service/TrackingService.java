@@ -4,14 +4,17 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tads.ufrn.apigestao.domain.Collector;
-import tads.ufrn.apigestao.domain.UserLocation;
+import tads.ufrn.apigestao.domain.CollectionAttempt;
 import tads.ufrn.apigestao.domain.dto.location.CollectorRouteDTO;
 import tads.ufrn.apigestao.domain.dto.location.CollectorTrackingDTO;
 import tads.ufrn.apigestao.domain.dto.location.LocationPointDTO;
+import tads.ufrn.apigestao.enums.AttemptType;
 import tads.ufrn.apigestao.repository.CollectorRepository;
-import tads.ufrn.apigestao.repository.UserLocationRepository;
+import tads.ufrn.apigestao.repository.CollectionAttemptRepository;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 @Service
@@ -19,7 +22,8 @@ import java.util.List;
 public class TrackingService {
 
     private final CollectorRepository collectorRepository;
-    private final UserLocationRepository locationRepository;
+    private final CollectionAttemptRepository collectionAttemptRepository;
+    private final CollectorService collectorService;
 
     @Transactional(readOnly = true)
     public List<CollectorTrackingDTO> getCollectorsTracking() {
@@ -32,8 +36,8 @@ public class TrackingService {
     @Transactional(readOnly = true)
     public CollectorRouteDTO getCollectorRoute(
             Long userId,
-            LocalDateTime start,
-            LocalDateTime end
+            LocalDate start,
+            LocalDate end
     ) {
         Collector collector = collectorRepository.findByUserId(userId)
                 .orElseThrow(() ->
@@ -42,30 +46,26 @@ public class TrackingService {
                         )
                 );
 
-        List<UserLocation> locations;
+        List<CollectionAttempt> attempts;
 
         if (start != null && end != null) {
-            locations =
-                    locationRepository
-                            .findAllByUserIdAndCapturedAtBetweenOrderByCapturedAtAsc(
-                                    userId,
-                                    start,
-                                    end
-                            );
+            LocalDateTime startDateTime = start.atStartOfDay();
+            LocalDateTime endDateTime = end.atTime(LocalTime.MAX);
+
+            attempts = collectionAttemptRepository
+                    .findAllByCollectorIdAndAttemptAtBetweenOrderByAttemptAtAsc(
+                            collector.getId(),
+                            startDateTime,
+                            endDateTime
+                    );
         } else {
-            locations =
-                    locationRepository
-                            .findAllByUserIdOrderByCapturedAtAsc(userId);
+            attempts = collectionAttemptRepository
+                    .findAllByCollectorIdOrderByAttemptAtAsc(collector.getId());
         }
 
-        List<LocationPointDTO> points = locations
+        List<LocationPointDTO> points = attempts
                 .stream()
-                .map(location -> new LocationPointDTO(
-                        location.getId(),
-                        location.getLatitude(),
-                        location.getLongitude(),
-                        location.getCapturedAt()
-                ))
+                .map(this::toLocationPointDTO)
                 .toList();
 
         return new CollectorRouteDTO(
@@ -79,12 +79,11 @@ public class TrackingService {
     private CollectorTrackingDTO toTrackingDTO(Collector collector) {
         Long userId = collector.getUser().getId();
 
-        UserLocation latestLocation =
-                locationRepository
-                        .findFirstByUserIdOrderByCapturedAtDesc(userId)
+        CollectionAttempt latestAttempt = collectionAttemptRepository
+                        .findTopByCollectorIdOrderByAttemptAtDesc(collector.getId())
                         .orElse(null);
 
-        if (latestLocation == null) {
+        if (latestAttempt == null) {
             return new CollectorTrackingDTO(
                     collector.getId(),
                     userId,
@@ -92,23 +91,64 @@ public class TrackingService {
                     null,
                     null,
                     null,
-                    false
+                    false,
+                    null,
+                    null,
+                    null
             );
         }
 
-        boolean online = latestLocation
-                .getCapturedAt()
-                .isAfter(LocalDateTime.now().minusMinutes(5));
+        String status = statusOf(latestAttempt);
+        boolean withinRadius = withinRadius(latestAttempt);
+        String color = colorOf(latestAttempt, withinRadius);
 
         return new CollectorTrackingDTO(
                 collector.getId(),
                 userId,
                 getCollectorName(collector),
-                latestLocation.getLatitude(),
-                latestLocation.getLongitude(),
-                latestLocation.getCapturedAt(),
-                online
+                latestAttempt.getLatitude(),
+                latestAttempt.getLongitude(),
+                latestAttempt.getAttemptAt(),
+                true,
+                status,
+                color,
+                withinRadius
         );
+    }
+
+    private LocationPointDTO toLocationPointDTO(CollectionAttempt attempt) {
+        boolean withinRadius = withinRadius(attempt);
+
+        return new LocationPointDTO(
+                attempt.getId(),
+                attempt.getLatitude(),
+                attempt.getLongitude(),
+                attempt.getAttemptAt(),
+                attempt.getInstallment().getId(),
+                attempt.getInstallment().getSale().getId(),
+                statusOf(attempt),
+                colorOf(attempt, withinRadius),
+                withinRadius,
+                attempt.getAmount()
+        );
+    }
+
+    private String statusOf(CollectionAttempt attempt) {
+        return AttemptType.PAYMENT.equals(attempt.getType()) ? "PAID" : "NOT_PAID";
+    }
+
+    private String colorOf(CollectionAttempt attempt, boolean withinRadius) {
+        return AttemptType.PAYMENT.equals(attempt.getType()) && withinRadius
+                ? "GREEN"
+                : "RED";
+    }
+
+    private boolean withinRadius(CollectionAttempt attempt) {
+        try {
+            return collectorService.isAttemptWithinApprovalLocation(attempt);
+        } catch (RuntimeException exception) {
+            return false;
+        }
     }
 
     private String getCollectorName(Collector collector) {

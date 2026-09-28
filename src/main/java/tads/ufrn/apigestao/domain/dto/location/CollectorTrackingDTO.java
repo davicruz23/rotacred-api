@@ -9,6 +9,9 @@ public record CollectorTrackingDTO(
         Double latitude,
         Double longitude,
         LocalDateTime lastLocationAt,
-        Boolean online
+        Boolean online,
+        String status,
+        String color,
+        Boolean withinRadius
 ) {
 }
