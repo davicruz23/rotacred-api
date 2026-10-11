@@ -18,4 +18,9 @@ public interface AddressRepository extends JpaRepository<Address, Long> {
 
     @Query("SELECT DISTINCT a.city FROM Address a ORDER BY a.city ASC")
     List<String> findAllDistinctCities();
+
+    @Query("SELECT DISTINCT TRIM(a.city) FROM Address a "
+            + "WHERE a.city IS NOT NULL AND TRIM(a.city) <> '' "
+            + "ORDER BY TRIM(a.city) ASC")
+    List<String> findAllDistinctCityNames();
 }

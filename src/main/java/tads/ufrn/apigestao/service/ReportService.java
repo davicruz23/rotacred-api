@@ -41,7 +41,7 @@ public class ReportService {
         document.open();
 
         Font titleFont = new Font(Font.HELVETICA, 18, Font.BOLD);
-        Paragraph title = new Paragraph("RELATÓRIO DE CARREGAMENTO\n\n", titleFont);
+        Paragraph title = new Paragraph("RotaCred - Relatório de Carregamento\n\n", titleFont);
         title.setAlignment(Element.ALIGN_CENTER);
         document.add(title);
 
@@ -119,7 +119,7 @@ public class ReportService {
         document.open();
 
         Font titleFont = new Font(Font.HELVETICA, 18, Font.BOLD);
-        Paragraph title = new Paragraph("ESTOQUE DISPONÍVEL\n\n", titleFont);
+        Paragraph title = new Paragraph("RotaCred - Estoque Atual\n\n", titleFont);
         title.setAlignment(Element.ALIGN_CENTER);
         document.add(title);
 
@@ -193,7 +193,7 @@ public class ReportService {
 
         // Cabeçalho do relatório
         Font titleFont = new Font(Font.HELVETICA, 18, Font.BOLD);
-        Paragraph title = new Paragraph("RELATÓRIO DE CLIENTES POR CIDADE\n\n", titleFont);
+        Paragraph title = new Paragraph("RotaCred - Clientes por Cidade\n\n", titleFont);
         title.setAlignment(Element.ALIGN_CENTER);
         document.add(title);
 

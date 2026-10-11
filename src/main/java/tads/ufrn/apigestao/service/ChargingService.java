@@ -57,7 +57,6 @@ public class ChargingService {
             return Page.empty(pageable);
         }
 
-        // Passa o searchTerm também para a segunda query
         List<Charging> chargings = repository.findAllByIdInWithItems(
                 idsPage.getContent(),
                 searchTerm
@@ -70,6 +69,11 @@ public class ChargingService {
                 .map(map::get)
                 .filter(Objects::nonNull)
                 .map(ChargingMapper::mapper)
+                .peek(dto -> dto.setChargingItems(
+                        dto.getChargingItems().stream()
+                                .filter(item -> item.getQuantity() > 0)
+                                .toList()
+                ))
                 .toList();
 
         return new PageImpl<>(dtoList, pageable, idsPage.getTotalElements());
